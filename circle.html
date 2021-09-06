@@ -1,0 +1,210 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+        }
+        
+        .gallery_wrapper {
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #circle_list {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            bottom: -33vh;
+            left: -200px;
+        }
+        
+        #circle_list li {
+            position: absolute;
+            width: 400px;
+            height: 500px;
+            text-align: center;
+            font-size: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid;
+            border-radius: 50px;
+            transition: margin, width, height, font-size 0.5s cubic-bezier(0.05, 0.01, 1, 1.48);
+        }
+        
+        #circle_list li.active {
+            width: 500px;
+            height: 625px;
+            font-size: 50px;
+            margin-left: -50px;
+        }
+        /* #circle_list li img {
+            width: 300px;
+            height: 300px;
+        } */
+    </style>
+</head>
+
+<body>
+    <div class="gallery_wrapper">
+        <ul id="circle_list">
+            <li class="active">Lorem Ipsum</li>
+            <li>Dolor Sit</li>
+            <li>Amet Consectetur</li>
+            <li>Adipiscing Elit</li>
+            <li>Nunc Tortor</li>
+            <li>Metus Mollis</li>
+            <li>Congue Sagittis</li>
+            <li>Vestibulum Et</li>
+            <li>Donec Eget</li>
+            <li>Maecenas et Justo</li>
+            <li>Malesuada Quam</li>
+            <li>Ultricies Sollicitudin</li>
+            <li>Gravida Nibh</li>
+            <li>Pellentesque Sapien</li>
+            <li>Suspendisse Vel</li>
+            <li>Mauris Consectetur</li>
+        </ul>
+    </div>
+    <script>
+        var radius = 300;
+        var angleSteps = 360 / document.getElementsByTagName('li').length;
+
+        var baseAngle = 0;
+
+        function updateListPositions(transition = false) {
+            var all = document.getElementsByTagName('li');
+            for (var i = 0, max = all.length; i < max; i++) {
+                if (transition) {
+                    all[i].style.transition = 'all 0.6s ease-out';
+                }
+                // Do something with the element here
+                var rotate = baseAngle - 90
+                var angle = rotate + i * angleSteps;
+                var centerX = window.innerWidth / 2;
+                var centerY = window.innerHeight * 2 + 10;
+                var distance = window.innerHeight * 2;
+                var x = distance * Math.cos(angle * (Math.PI / 180));
+                var y = distance * Math.sin(angle * (Math.PI / 180));
+                all[i].style.left = centerX + x;
+                all[i].style.top = centerY + y;
+                all[i].style.transform =
+                    'rotate(' + (angleSteps * i + rotate + 90) + 'deg)';
+                if (transition) {
+                    setTimeout(
+                        (ele) => {
+                            ele.style.transition = '';
+                        },
+                        600,
+                        all[i]
+                    );
+                }
+            }
+        }
+
+        updateListPositions();
+
+        // var stepInterval = setInterval(stepAngle, 200);
+
+        // function stepAngle() {
+        //     baseAngle++;
+        //     updateListPositions();
+        // }
+
+        const container = document.querySelector('#circle_list');
+        let isDown = false;
+        let startX;
+        let prevX;
+        let scrolledLeft = 0;
+
+        container.addEventListener('mousedown', (e) => {
+            isDown = true;
+            //slider.classList.add('active');
+            startX = e.x;
+            prevX = startX;
+            cancelMomentumTracking();
+        });
+
+        container.addEventListener('mouseleave', () => {
+            isDown = false;
+            //slider.classList.remove('active');
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+            //slider.classList.remove('active');
+            beginMomentumTracking();
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+
+            const x = e.x - prevX;
+            baseAngle += (x / container.offsetWidth) * 360 * 3 / document.getElementsByTagName('li').length; //scroll-fast
+
+            updateListPositions();
+
+            velX = ((e.x - prevX) / container.offsetWidth) * 2 * 360;
+            prevX = e.x;
+        });
+
+        // Momentum
+
+        var velX = 0;
+        var momentumID;
+
+        function beginMomentumTracking() {
+            cancelMomentumTracking();
+            momentumID = requestAnimationFrame(momentumLoop);
+        }
+
+        function cancelMomentumTracking() {
+            cancelAnimationFrame(momentumID);
+            var all = document.getElementsByTagName('li');
+            for (var i = 0, max = all.length; i < max; i++) {
+                all[i].style.transition = '';
+                all[i].classList.remove('active');
+            }
+        }
+
+        function momentumLoop() {
+            baseAngle += velX;
+            velX *= 0.95;
+            updateListPositions();
+            if (Math.abs(velX) > 0.1) {
+                momentumID = requestAnimationFrame(momentumLoop);
+            } else {
+                //momentum scrolling is ended.
+                let delta = mathRest(baseAngle, angleSteps);
+                console.log(delta)
+                baseAngle +=
+                    delta - angleSteps / 2 > 0 ?
+                    angleSteps - delta :
+                    -delta;
+                updateListPositions(true);
+
+                setTimeout(setActiveNode, 500);
+            }
+        }
+
+        function mathRest(num, div) {
+            return (num % div + div) % div;
+        }
+
+        function setActiveNode() {
+            let activeIndex = mathRest(-baseAngle, 360) / angleSteps;
+
+            document.getElementsByTagName('li')[activeIndex].classList.add('active')
+
+        }
+    </script>
+</body>
+
+</html>
