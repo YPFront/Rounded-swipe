@@ -20,7 +20,7 @@
             list-style: none;
             margin: 0;
             padding: 0;
-            bottom: -33vh;
+            top: calc(100vh - 700px);
             left: -200px;
         }
         
@@ -43,6 +43,24 @@
             height: 625px;
             font-size: 50px;
             margin-left: -50px;
+        }
+        
+        @media (max-height: 700px) {
+            #circle_list {
+                top: calc(100vh - 350px);
+                left: -100px;
+            }
+            #circle_list li {
+                width: 200px;
+                height: 250px;
+                font-size: 28px;
+            }
+            #circle_list li.active {
+                width: 250px;
+                height: 310px;
+                margin-left: -25px;
+                font-size: 40px;
+            }
         }
         /* #circle_list li img {
             width: 300px;
@@ -122,43 +140,75 @@
         let startX;
         let prevX;
         let scrolledLeft = 0;
+        var velX = 0;
+        var momentumID;
 
-        container.addEventListener('mousedown', (e) => {
-            isDown = true;
+        window.addEventListener('resize', (e) => {
+            updateListPositions();
+        });
+
+        container.addEventListener('touchstart', (e) => {
             //slider.classList.add('active');
-            startX = e.x;
-            prevX = startX;
-            cancelMomentumTracking();
+            initTouch(e.touches[0].clientX)
+        });
+        container.addEventListener('mousedown', (e) => {
+            initTouch(e.x)
         });
 
+        container.addEventListener('touchcancel', () => {
+            cancelTouch()
+        });
         container.addEventListener('mouseleave', () => {
-            isDown = false;
-            //slider.classList.remove('active');
+            cancelTouch()
         });
 
+        container.addEventListener('touchend', () => {
+            endTouch()
+        });
         container.addEventListener('mouseup', () => {
-            isDown = false;
-            //slider.classList.remove('active');
-            beginMomentumTracking();
+            endTouch()
         });
 
+        container.addEventListener('touchmove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+
+            touchMove(e.touches[0].clientX)
+        });
         container.addEventListener('mousemove', (e) => {
             if (!isDown) return;
             e.preventDefault();
 
-            const x = e.x - prevX;
+            touchMove(e.x)
+        });
+
+        function initTouch(x) {
+            isDown = true;
+            startX = x;
+            prevX = startX;
+            cancelMomentumTracking();
+        }
+
+        function touchMove(x_cur) {
+            const x = x_cur - prevX;
             baseAngle += (x / container.offsetWidth) * 360 * 3 / document.getElementsByTagName('li').length; //scroll-fast
 
             updateListPositions();
 
-            velX = ((e.x - prevX) / container.offsetWidth) * 2 * 360;
-            prevX = e.x;
-        });
+            velX = ((x_cur - prevX) / container.offsetWidth) * 2 * 360;
+            prevX = x_cur;
+        }
+
+        function cancelTouch() {
+            isDown = false
+        }
+
+        function endTouch() {
+            isDown = false
+            beginMomentumTracking();
+        }
 
         // Momentum
-
-        var velX = 0;
-        var momentumID;
 
         function beginMomentumTracking() {
             cancelMomentumTracking();
@@ -183,7 +233,7 @@
             } else {
                 //momentum scrolling is ended.
                 let delta = mathRest(baseAngle, angleSteps);
-                console.log(delta)
+
                 baseAngle +=
                     delta - angleSteps / 2 > 0 ?
                     angleSteps - delta :
